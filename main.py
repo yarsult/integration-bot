@@ -47,10 +47,10 @@ def task(update, context):
     num = update.message.text.split()[1]
     ans = database_funcs.get_task_by_num(num)
     if ans != "Error":
-        update.message.reply_text(id, ans['text'])
+        update.message.reply_text(ans['text'])
         database_funcs.update_user_last_asked_task(num, ans['num'], id)
     else:
-        update.message.reply_text(id, messages['unclear_num'])
+        update.message.reply_text(messages['unclear_num'])
 
 
 def solution(update, context):

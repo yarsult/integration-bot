@@ -9,7 +9,7 @@ class Special:
         cur = con.cursor()
         task = str(task_num) + "_solution"
         q2 = "SELECT [" + task + "] FROM tasks WHERE id = " + str(task_id)
-        res = cur.execute(q2).fetchone()
+        res = cur.execute(q2).fetchone()[0]
         con.close()
         return res
 
