@@ -1,9 +1,12 @@
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 import database_funcs
+from secret import TOKEN
 
 state = 0
 
-
+reply_keyboard = [['Кто я', 'Задание'], ['Теория', 'Анекдот'], ['Команды']]
+markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 messages = dict(commands="Задание хх - я отправлю тебе задание указанного номера (максимум - 27). Пример: задание 7 \n"
                          "\n"
                          "Решение - напиши эту команду, чтобы узнать ответ на задание, которое я отправил тебе \n"
@@ -17,7 +20,7 @@ messages = dict(commands="Задание хх - я отправлю тебе з�
 
 
 def main():
-    updater = Updater('5331419578:AAGQUFsR7poil4NHuE34xAvQH9RQCoXIbU0', use_context=True)
+    updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(MessageHandler(Filters.text, text))
@@ -27,7 +30,7 @@ def main():
 
 def start(update, context):
     global id
-    update.message.reply_text(messages['commands'])
+    update.message.reply_text(messages['commands'], reply_markup=markup)
     id = update.message.from_user.id
     if database_funcs.check_if_user_in_base(id) is None:
         database_funcs.add_user_to_base(id)
@@ -38,38 +41,40 @@ def start(update, context):
 def whoami(update, context):
     global id
     name = database_funcs.get_user_nick(id)
-    ans = "Ты:" + " " + name + " " + "id:" " " + str(id)
+    ans = "Ты пользователь Telegram c id: " + str(id)
     update.message.reply_text(ans)
 
 
 def task(update, context):
     global id
-    num = update.message.text.split()[1]
+    num = update.message.text
     ans = database_funcs.get_task_by_num(num)
+    group_keyboard = [['Решение', 'Выйти']]
+    markup = ReplyKeyboardMarkup(group_keyboard, one_time_keyboard=True)
     if ans != "Error":
-        update.message.reply_text(ans['text'])
+        update.message.reply_text(ans['text'], reply_markup=markup)
         database_funcs.update_user_last_asked_task(num, ans['num'], id)
     else:
-        update.message.reply_text(messages['unclear_num'])
+        update.message.reply_text(messages['unclear_num'], reply_markup=markup)
 
 
 def solution(update, context):
-    global id
+    global id, markup
     sol = database_funcs.get_solution_to_user(id)
-    update.message.reply_text(sol)
+    update.message.reply_text(sol, reply_markup=markup)
 
 
 def theory(update, context):
-    global id
-    num = update.message.text.split()[1]
+    global id, markup
+    num = update.message.text
     if num.isdigit():
         if 0 < int(num) < 28:
             res = database_funcs.get_ege_theory(num)
-            update.message.reply_text(res)
+            update.message.reply_text(res, reply_markup=markup)
         else:
-            update.message.reply_text(messages['unclear_num'])
+            update.message.reply_text(messages['unclear_num'], reply_markup=markup)
     else:
-        update.message.reply_text(messages['unclear_num'])
+        update.message.reply_text(messages['unclear_num'], reply_markup=markup)
 
 
 def fun(update, context):
@@ -78,11 +83,28 @@ def fun(update, context):
     update.message.reply_text(res)
 
 
+def catch_task(update, context):
+    global state
+    reply_keyboard = [[str(i) for i in range(1, 10)], [str(i) for i in range(10, 19)], [str(i) for i in range(19, 28)]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+    update.message.reply_text('Введите номер задания, с которым хотите ознакомиться', reply_markup=markup)
+    state = 1
+
+
+def catch_theory(update, context):
+    global state
+    reply_keyboard = [[str(i) for i in range(1, 10)], [str(i) for i in range(10, 19)], [str(i) for i in range(19, 28)]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+    update.message.reply_text('Введите номер задания, с теорией по которыму хотите ознакомиться',
+                              reply_markup=markup)
+    state = 2
+
+
 def text(update, context):
     global state, markup
     req = update.message.text.lower()
     if req.split()[0] == 'задание':
-        task(update, context)
+        catch_task(update, context)
     elif req == 'кто я':
         whoami(update, context)
     elif req == 'решение':
@@ -90,9 +112,15 @@ def text(update, context):
     elif req == 'команды':
         update.message.reply_text(messages['commands'])
     elif req.split()[0] == 'теория':
-        theory(update, context)
+        catch_theory(update, context)
     elif 'шутк' in req or 'анекдот' in req:
         fun(update, context)
+    elif state == 1 and req.isdigit():
+        task(update, context)
+    elif state == 2 and req.isdigit():
+        theory(update, context)
+    elif req == 'выйти':
+        update.message.reply_text('Идём дальше', reply_markup=markup)
     else:
         update.message.reply_text('Я тебя не понимаю. Напиши "команды", чтобы узнать список доступных функций.')
 
