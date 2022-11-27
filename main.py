@@ -1,5 +1,6 @@
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+from random import choice
 import database_funcs
 import db_quiz
 from secret import TOKEN
@@ -18,9 +19,9 @@ messages = dict(commands="Задание хх - я отправлю тебе з�
                          "Теория хх - напиши, чтобы получить теорию по указанному заданию (максимум - 27). Пример: "
                          "теория 22 \n"
                          "\n"
-                         '"Шутка" или "анекдот" - напиши, чтобы посмеяться)',
+                         '"Анекдот" - напиши, чтобы посмеяться)',
                 initial="Я могу помочь с подготовкой к ЕГЭ по информатике или потренировать вас на вопросах "
-                        "собесодования на it-специальность",
+                        "собеседования на it-специальность",
                 unclear_num="Я не понимаю, какой номер ты имел в виду... Попробуй еще раз")
 
 
@@ -52,7 +53,7 @@ def start_ege(update, context):
 def whoami(update, context):
     global id
     name = database_funcs.get_user_nick(id)
-    ans = "Ты пользователь Telegram c id: " + str(id)
+    ans = "Ты пользователь Telegram c id " + str(id)
     update.message.reply_text(ans)
 
 
@@ -67,6 +68,13 @@ def task(update, context):
         database_funcs.update_user_last_asked_task(num, ans['num'], id)
     else:
         update.message.reply_text(messages['unclear_num'], reply_markup=markup)
+
+
+def send_story(update, context):
+    with open('stories.txt') as f:
+        lst = f.read().split('sep')
+    lst = list(filter(lambda x: x, lst))
+    return choice(lst)
 
 
 def solution(update, context):
@@ -112,14 +120,18 @@ def catch_theory(update, context):
 
 
 def net_question(update, context):
-    global id, state, variants_net, right_ans_net, question_id
+    global id, state, variants_net, right_ans_net, question_id_net
     if not db_quiz.get_last_asked_question(id, 'asked_net_question'):
         db_quiz.update_user_last_asked_question(0, id, 'asked_net_question')
-    question_id = int(db_quiz.get_last_asked_question(id, 'asked_net_question')) + 1
-    if question_id == 14:
-        update.message.reply_text('Ты прошел все вопросы, начинаем заново')
-        question_id = 1
-    question, variants_net, right_ans_net = db_quiz.get_question(question_id, 'network_questions')
+    question_id_net = int(db_quiz.get_last_asked_question(id, 'asked_net_question')) + 1
+    if question_id_net == 14:
+        update.message.reply_text('Ты прошел все вопросы, вот тебе интересная история:')
+        story = send_story(update, context)
+        update.message.reply_text(story)
+        db_quiz.update_user_last_asked_question(0, id, 'asked_net_question')
+        enter_menu(update, context)
+        return
+    question, variants_net, right_ans_net = db_quiz.get_question(question_id_net, 'network_questions')
     reply_keyboard = [variants_net.split(';')[:2], variants_net.split(';')[2:], ['На главную']]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     update.message.reply_text(question, reply_markup=markup)
@@ -127,14 +139,18 @@ def net_question(update, context):
 
 
 def pyt_question(update, context):
-    global id, state, variants_pyt, right_ans_pyt, question_id
+    global id, state, variants_pyt, right_ans_pyt, question_id_pyt
     if not db_quiz.get_last_asked_question(id, 'asked_pyt_question'):
         db_quiz.update_user_last_asked_question(0, id, 'asked_pyt_question')
-    question_id = int(db_quiz.get_last_asked_question(id, 'asked_pyt_question')) + 1
-    if question_id == 11:
-        update.message.reply_text('Ты прошел все вопросы, начинаем заново')
-        question_id = 1
-    question, variants_pyt, right_ans_pyt = db_quiz.get_question(question_id, 'questions_quiz')
+    question_id_pyt = int(db_quiz.get_last_asked_question(id, 'asked_pyt_question')) + 1
+    if question_id_pyt == 11:
+        update.message.reply_text('Ты прошел все вопросы, вот тебе интересная история:')
+        story = send_story(update, context)
+        update.message.reply_text(story)
+        db_quiz.update_user_last_asked_question(0, id, 'asked_net_question')
+        enter_menu(update, context)
+        return
+    question, variants_pyt, right_ans_pyt = db_quiz.get_question(question_id_pyt, 'questions_quiz')
     reply_keyboard = [variants_pyt.split(';')[:2], variants_pyt.split(';')[2:], ['На главную']]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     update.message.reply_text(question, reply_markup=markup)
@@ -148,24 +164,24 @@ def enter_menu(update, context):
 
 
 def check_net_answer(update, context):
-    global right_ans_net, id, question_id
+    global right_ans_net, id, question_id_net
     ans = update.message.text
     if ans == str(right_ans_net):
         update.message.reply_text('Ты прав')
     else:
         update.message.reply_text(f'Неверно, правильный ответ: {right_ans_net}')
-    db_quiz.update_user_last_asked_question(question_id, id, 'asked_net_question')
+    db_quiz.update_user_last_asked_question(question_id_net, id, 'asked_net_question')
     net_question(update, context)
 
 
 def check_pyt_answer(update, context):
-    global right_ans_pyt, id, question_id
+    global right_ans_pyt, id, question_id_pyt
     ans = update.message.text
     if ans == str(right_ans_pyt):
         update.message.reply_text('Ты прав')
     else:
         update.message.reply_text(f'Неверно, правильный ответ: {right_ans_pyt}')
-    db_quiz.update_user_last_asked_question(question_id, id, 'asked_pyt_question')
+    db_quiz.update_user_last_asked_question(question_id_pyt, id, 'asked_pyt_question')
     pyt_question(update, context)
 
 

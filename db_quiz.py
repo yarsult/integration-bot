@@ -27,3 +27,5 @@ def get_question(question_id, sort_of_question):
     con.close()
     return [res, answers, right_ans]
 
+
+
