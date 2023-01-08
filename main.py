@@ -6,7 +6,7 @@ import db_quiz
 from secret import TOKEN
 
 state = 0
-reply_keyboard_main = [['Подготовка к ЕГЭ'], ['Вопросы собеседования по сетям'], ['Вопросы собеседования по питону']]
+reply_keyboard_main = [['Подготовка к ЕГЭ'], ['Вопросы собеседования по сетям'], ['Вопросы собеседования по Python']]
 reply_keyboard_ege = [['Кто я', 'Задание'], ['Теория', 'Анекдот'], ['Команды', 'На главную']]
 markup_main = ReplyKeyboardMarkup(reply_keyboard_main, one_time_keyboard=False)
 markup_ege = ReplyKeyboardMarkup(reply_keyboard_ege, one_time_keyboard=False)
