@@ -51,9 +51,8 @@ def start_ege(update, context):
 
 
 def whoami(update, context):
-    global id
-    name = database_funcs.get_user_nick(id)
-    ans = "Ты пользователь Telegram c id " + str(id)
+    name = update.message.chat.first_name
+    ans = f'Вы пользователь Telegram {name}'
     update.message.reply_text(ans)
 
 
