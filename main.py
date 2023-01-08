@@ -192,7 +192,7 @@ def text(update, context):
         start_ege(update, context)
     elif req == 'вопросы собеседования по сетям':
         net_question(update, context)
-    elif req == 'вопросы собеседования по питону':
+    elif req == 'вопросы собеседования по Python':
         pyt_question(update, context)
     elif req == 'задание':
         catch_task(update, context)
