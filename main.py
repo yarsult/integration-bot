@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from random import choice
 import database_funcs
