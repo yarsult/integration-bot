@@ -146,7 +146,7 @@ def pyt_question(update, context):
         update.message.reply_text('Ты прошел все вопросы, вот тебе интересная история:')
         story = send_story(update, context)
         update.message.reply_text(story)
-        db_quiz.update_user_last_asked_question(0, id, 'asked_net_question')
+        db_quiz.update_user_last_asked_question(0, id, 'asked_pyt_question')
         enter_menu(update, context)
         return
     question, variants_pyt, right_ans_pyt = db_quiz.get_question(question_id_pyt, 'questions_quiz')
@@ -191,7 +191,7 @@ def text(update, context):
         start_ege(update, context)
     elif req == 'вопросы собеседования по сетям':
         net_question(update, context)
-    elif req == 'вопросы собеседования по Python':
+    elif req == 'вопросы собеседования по python':
         pyt_question(update, context)
     elif req == 'задание':
         catch_task(update, context)

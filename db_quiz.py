@@ -5,6 +5,7 @@ def get_last_asked_question(user_id, sort_of_question):
     con = sqlite3.connect("main_db.db")
     cur = con.cursor()
     res = cur.execute(f"SELECT {sort_of_question} FROM user_info WHERE user_id = {user_id}").fetchall()
+
     con.commit()
     con.close()
     return res[0][0]
